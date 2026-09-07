@@ -1,0 +1,7 @@
+question,expected,raw_prediction,raw_correct,guarded_prediction,guarded_correct,guard_triggered
+What is 6 * 7?,42,42,True,42,True,True
+What is 8 * 8?,64,64,True,64,True,True
+What is 12 + 9?,21,21,True,21,True,True
+What is 15 - 7?,8,8,True,8,True,True
+What is 9 * 5?,45,45,True,45,True,True
+What is (15 + 5) * 3?,60,24,False,60,True,True

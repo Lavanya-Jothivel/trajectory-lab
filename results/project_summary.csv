@@ -1,0 +1,10 @@
+metric,value
+tests_passed,19.0
+direct_baseline_accuracy,60.0
+mock_react_accuracy,100.0
+qwen_react_answer_accuracy,100.0
+qwen_react_tool_selection_accuracy,57.14
+raw_qwen_controlled_accuracy,87.5
+guarded_router_accuracy,100.0
+recovery_agent_accuracy,100.0
+verification_agent_accuracy,100.0

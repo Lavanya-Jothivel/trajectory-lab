@@ -1,0 +1,4 @@
+id,steps,recovered,verified,corrected
+normal_01,2,False,True,False
+failure_01,2,True,False,True
+silent_01,2,False,True,True

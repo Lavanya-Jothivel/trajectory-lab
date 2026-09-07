@@ -1,0 +1,8 @@
+method,task_set,accuracy,tool_selection_accuracy,recovery,verification
+Direct Baseline,Synthetic 5-task,60.0,,False,False
+ReAct (Mock Model),Synthetic 5-task,100.0,,False,False
+Qwen ReAct,Real-model 7-task,100.0,57.14,False,False
+Raw Qwen,Controlled 8-task,87.5,,False,False
+Guarded Router,Controlled 8-task,100.0,100.0,False,False
+Recovery Agent,Failure stress test,100.0,,True,False
+Verification Agent,Silent-error stress test,100.0,,False,True

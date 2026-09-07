@@ -1,0 +1,4 @@
+expression,expected_answer,faulty_result,faulty_correct,verified_result,verified_correct,correction_made
+8 * 8,64,63,False,64,True,True
+7 + 9,16,16,True,16,True,False
+6 * 7,42,42,True,42,True,False

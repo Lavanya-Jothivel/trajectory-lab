@@ -1,0 +1,6 @@
+id,question,expected_answer,direct_answer,direct_correct,react_answer,react_correct,react_steps
+math_01,What is 6 * 7?,42,42,True,42,True,2
+math_02,What is 8 * 8?,64,64,True,64,True,2
+fact_01,What is the capital of Japan?,Tokyo,Tokyo,True,Tokyo,True,2
+math_03,What is (15 + 5) * 3?,60,20,False,60,True,2
+fact_02,Who is the creator of Python?,Guido van Rossum,Unknown,False,Guido van Rossum,True,2

@@ -1,0 +1,121 @@
+[
+  {
+    "name": "normal_01",
+    "question": "What is 6 * 7?",
+    "answer": "42",
+    "guard_triggered": true,
+    "recovered": false,
+    "verified": false,
+    "corrected": false,
+    "trajectory": [
+      {
+        "type": "guard",
+        "decision": "calculator_required",
+        "expression": "6 * 7"
+      },
+      {
+        "type": "action",
+        "tool": "calculator",
+        "tool_input": "6 * 7",
+        "observation": "42"
+      }
+    ]
+  },
+  {
+    "name": "normal_02",
+    "question": "What is 12 + 9?",
+    "answer": "21",
+    "guard_triggered": true,
+    "recovered": false,
+    "verified": false,
+    "corrected": false,
+    "trajectory": [
+      {
+        "type": "guard",
+        "decision": "calculator_required",
+        "expression": "12 + 9"
+      },
+      {
+        "type": "action",
+        "tool": "calculator",
+        "tool_input": "12 + 9",
+        "observation": "21"
+      }
+    ]
+  },
+  {
+    "name": "explicit_failure",
+    "question": "What is (15 + 5) * 3?",
+    "answer": "60",
+    "guard_triggered": true,
+    "recovered": true,
+    "verified": false,
+    "corrected": false,
+    "trajectory": [
+      {
+        "type": "guard",
+        "decision": "calculator_required",
+        "expression": "(15 + 5) * 3"
+      },
+      {
+        "type": "action",
+        "tool": "unreliable_calculator",
+        "tool_input": "(15 + 5) * 3",
+        "observation": "ERROR: calculator temporarily unavailable"
+      },
+      {
+        "type": "recovery",
+        "from_tool": "unreliable_calculator",
+        "to_tool": "calculator",
+        "observation": "60"
+      }
+    ]
+  },
+  {
+    "name": "silent_fault",
+    "question": "What is 8 * 8?",
+    "answer": "64",
+    "guard_triggered": true,
+    "recovered": false,
+    "verified": true,
+    "corrected": true,
+    "trajectory": [
+      {
+        "type": "guard",
+        "decision": "calculator_required",
+        "expression": "8 * 8"
+      },
+      {
+        "type": "action",
+        "tool": "faulty_calculator",
+        "tool_input": "8 * 8",
+        "observation": "63"
+      },
+      {
+        "type": "verification",
+        "primary_result": "63",
+        "trusted_result": "64"
+      },
+      {
+        "type": "correction",
+        "incorrect_result": "63",
+        "correct_result": "64"
+      }
+    ]
+  },
+  {
+    "name": "unsupported",
+    "question": "Explain reinforcement learning.",
+    "answer": null,
+    "guard_triggered": false,
+    "recovered": false,
+    "verified": false,
+    "corrected": false,
+    "trajectory": [
+      {
+        "type": "guard",
+        "decision": "no_math_route"
+      }
+    ]
+  }
+]

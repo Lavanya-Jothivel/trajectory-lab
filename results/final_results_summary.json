@@ -1,0 +1,27 @@
+{
+  "metrics": {
+    "tests_passed": 32,
+    "direct_baseline_accuracy": 60.0,
+    "mock_react_accuracy": 100.0,
+    "qwen_react_answer_accuracy": 100.0,
+    "qwen_react_tool_selection_accuracy": 57.14,
+    "raw_qwen_controlled_accuracy": 87.5,
+    "guarded_router_accuracy": 100.0,
+    "reliable_guarded_benchmark_accuracy": 100.0,
+    "unified_router_accuracy": 100.0,
+    "unified_router_guard_trigger_rate": 85.71,
+    "unified_router_abstention_rate": 14.29,
+    "recovery_events": 1,
+    "verification_events": 1,
+    "correction_events": 1,
+    "average_unified_trajectory_events": 2.29
+  },
+  "notes": [
+    "Results come from multiple small controlled task sets.",
+    "Percentages across different task sets should not be treated as directly comparable benchmark scores.",
+    "Qwen2.5-0.5B-Instruct is used for the real-model experiments.",
+    "Explicit failures and silent faults are deliberately injected for reliability evaluation.",
+    "The guarded router uses deterministic routing rules for supported arithmetic and factual lookup tasks.",
+    "Unsupported requests can abstain instead of forcing an incorrect tool route."
+  ]
+}

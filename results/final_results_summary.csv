@@ -1,0 +1,16 @@
+metric,value
+tests_passed,32.0
+direct_baseline_accuracy,60.0
+mock_react_accuracy,100.0
+qwen_react_answer_accuracy,100.0
+qwen_react_tool_selection_accuracy,57.14
+raw_qwen_controlled_accuracy,87.5
+guarded_router_accuracy,100.0
+reliable_guarded_benchmark_accuracy,100.0
+unified_router_accuracy,100.0
+unified_router_guard_trigger_rate,85.71
+unified_router_abstention_rate,14.29
+recovery_events,1.0
+verification_events,1.0
+correction_events,1.0
+average_unified_trajectory_events,2.29

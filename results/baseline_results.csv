@@ -1,0 +1,4 @@
+id,question,predicted_answer,expected_answer,predicted_tool,expected_tool,answer_correct,tool_correct,steps
+math_01,What is 6 * 7?,42,42,calculator,calculator,True,True,2
+math_02,What is 8 * 8?,64,64,calculator,calculator,True,True,2
+fact_01,What is the capital of Japan?,Tokyo,Tokyo,lookup,lookup,True,True,2

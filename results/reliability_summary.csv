@@ -1,0 +1,3 @@
+scenario,baseline_success,improved_success,mechanism
+Explicit Tool Failure,False,True,Recovery
+Silent Tool Error,False,True,Verification

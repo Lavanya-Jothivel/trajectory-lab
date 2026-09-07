@@ -1,0 +1,8 @@
+question,expected_tool,actual_tool,tool_selected,correct_tool
+What is 6 * 7?,calculator,calculator,True,True
+What is 8 * 8?,calculator,calculator,True,True
+What is 12 + 9?,calculator,none,False,False
+What is 15 - 7?,calculator,calculator,True,True
+What is 9 * 5?,calculator,none,False,False
+What is the capital of Japan?,lookup,none,False,False
+Who is the creator of Python?,lookup,lookup,True,True

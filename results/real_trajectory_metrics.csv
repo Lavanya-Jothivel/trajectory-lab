@@ -1,0 +1,8 @@
+question,steps,tool_calls,finish_steps,had_error
+What is 6 * 7?,2,1,1,False
+What is 8 * 8?,2,1,1,False
+What is 12 + 9?,1,0,1,False
+What is 15 - 7?,2,1,1,False
+What is 9 * 5?,1,0,1,False
+What is the capital of Japan?,1,0,1,False
+Who is the creator of Python?,2,1,1,False

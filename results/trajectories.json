@@ -1,0 +1,71 @@
+[
+  {
+    "id": "normal_01",
+    "expression": "7 + 9",
+    "primary_tool": "calculator",
+    "answer": "16",
+    "recovered": false,
+    "verified": true,
+    "corrected": false,
+    "trajectory": [
+      {
+        "stage": "primary",
+        "tool": "calculator",
+        "input": "7 + 9",
+        "observation": "16"
+      },
+      {
+        "stage": "verification",
+        "tool": "calculator",
+        "input": "7 + 9",
+        "observation": "16"
+      }
+    ]
+  },
+  {
+    "id": "failure_01",
+    "expression": "(15 + 5) * 3",
+    "primary_tool": "unreliable_calculator",
+    "answer": "60",
+    "recovered": true,
+    "verified": false,
+    "corrected": true,
+    "trajectory": [
+      {
+        "stage": "primary",
+        "tool": "unreliable_calculator",
+        "input": "(15 + 5) * 3",
+        "observation": "ERROR: calculator temporarily unavailable"
+      },
+      {
+        "stage": "recovery",
+        "tool": "calculator",
+        "input": "(15 + 5) * 3",
+        "observation": "60"
+      }
+    ]
+  },
+  {
+    "id": "silent_01",
+    "expression": "8 * 8",
+    "primary_tool": "faulty_calculator",
+    "answer": "64",
+    "recovered": false,
+    "verified": true,
+    "corrected": true,
+    "trajectory": [
+      {
+        "stage": "primary",
+        "tool": "faulty_calculator",
+        "input": "8 * 8",
+        "observation": "63"
+      },
+      {
+        "stage": "verification",
+        "tool": "calculator",
+        "input": "8 * 8",
+        "observation": "64"
+      }
+    ]
+  }
+]

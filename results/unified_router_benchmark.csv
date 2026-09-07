@@ -1,0 +1,8 @@
+name,expected,answer,tool,correct,guard_triggered,recovered,verified,corrected,trajectory_events
+math_normal,42,42,calculator,True,True,False,False,False,2
+math_failure,60,60,calculator,True,True,True,False,False,3
+math_silent_fault,64,64,faulty_calculator,True,True,False,True,True,4
+lookup_japan,Tokyo,Tokyo,lookup,True,True,False,False,False,2
+lookup_france,Paris,Paris,lookup,True,True,False,False,False,2
+lookup_python,Guido van Rossum,Guido van Rossum,lookup,True,True,False,False,False,2
+unsupported,,,,True,False,False,False,False,1

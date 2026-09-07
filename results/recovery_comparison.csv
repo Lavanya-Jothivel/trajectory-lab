@@ -1,0 +1,4 @@
+expression,standard_result,standard_success,recovery_result,recovery_success,recovered
+8 * 8,64,True,64,True,False
+(15 + 5) * 3,ERROR: calculator temporarily unavailable,False,60,True,True
+7 + 9,16,True,16,True,False

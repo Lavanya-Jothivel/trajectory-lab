@@ -1,0 +1,6 @@
+name,trajectory_events,guard_events,action_events,recovery_events,verification_events,correction_events
+normal_01,2,1,1,0,0,0
+normal_02,2,1,1,0,0,0
+explicit_failure,3,1,1,1,0,0
+silent_fault,4,1,1,0,1,1
+unsupported,1,1,0,0,0,0

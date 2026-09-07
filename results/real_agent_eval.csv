@@ -1,0 +1,8 @@
+question,answer,expected_answer,answer_correct,expected_tool,actual_tool,correct_tool
+What is 6 * 7?,42,42,True,calculator,calculator,True
+What is 8 * 8?,The calculation shows that 8 * 8 equals 64.,64,True,calculator,calculator,True
+What is 12 + 9?,The sum of 12 and 9 is 21.,21,True,calculator,none,False
+What is 15 - 7?,The answer is 8.,8,True,calculator,calculator,True
+What is 9 * 5?,45,45,True,calculator,none,False
+What is the capital of Japan?,Tokyo (Tokyo) follows the answer.,Tokyo,True,lookup,none,False
+Who is the creator of Python?,Guido van Rossum is the creator of Python.,Guido van Rossum,True,lookup,lookup,True

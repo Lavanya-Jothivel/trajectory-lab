@@ -1,0 +1,6 @@
+name,question,expected,answer,correct,guard_triggered,recovered,verified,corrected
+normal_01,What is 6 * 7?,42,42,True,True,False,False,False
+normal_02,What is 12 + 9?,21,21,True,True,False,False,False
+explicit_failure,What is (15 + 5) * 3?,60,60,True,True,True,False,False
+silent_fault,What is 8 * 8?,64,64,True,True,False,True,True
+unsupported,Explain reinforcement learning.,,,True,False,False,False,False

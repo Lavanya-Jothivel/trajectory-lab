@@ -1,0 +1,5 @@
+id,scenario,expression,primary_tool,expected_answer,predicted_answer,correct,recovered,verified,corrected,steps
+normal_01,normal,7 + 9,calculator,16,16,True,False,True,False,2
+normal_02,normal,6 * 7,calculator,42,42,True,False,True,False,2
+failure_01,explicit_failure,(15 + 5) * 3,unreliable_calculator,60,60,True,True,False,True,2
+silent_01,silent_error,8 * 8,faulty_calculator,64,64,True,False,True,True,2

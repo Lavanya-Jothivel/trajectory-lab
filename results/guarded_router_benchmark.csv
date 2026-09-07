@@ -1,0 +1,9 @@
+question,expected,raw_answer,raw_correct,guarded_answer,guarded_correct,tool,guard_triggered
+What is 6 * 7?,42,The product of 6 and 7 is 42.,True,42,True,calculator,True
+What is 8 * 8?,64,The product of 8 and 8 is 64.,True,64,True,calculator,True
+What is 12 + 9?,21,The sum of 12 and 9 is 21.,True,21,True,calculator,True
+What is 15 - 7?,8,The result of 15 minus 7 is 8.,True,8,True,calculator,True
+What is 9 * 5?,45,The product of 9 and 5 is 45.,True,45,True,calculator,True
+What is (15 + 5) * 3?,60,The expression (15 + 5) * 3 evaluates to 24.,False,60,True,calculator,True
+What is the capital of Japan?,Tokyo,The capital of Japan is Tokyo.,True,Tokyo,True,lookup,True
+Who is the creator of Python?,Guido van Rossum,"The creator of Python is Guido van Rossum, a Dutch programmer and software engineer. He developed Python in 1989 while working at Bjarne Stroustrup's company, Bell Labs.",True,Guido van Rossum,True,lookup,True
