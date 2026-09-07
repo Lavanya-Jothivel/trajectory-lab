@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+message: "If you use this repository, please cite it using the metadata below."
+title: "TrajectoryLab: ReAct Replication and Reliability Analysis of Tool-Using Language Agents"
+type: software
+authors:
+  - family-names: "Jothivel"
+    given-names: "Lavanya"
+repository-code: "https://github.com/Lavanya-Jothivel/trajectory-lab"
+url: "https://github.com/Lavanya-Jothivel/trajectory-lab"
+license: MIT
+keywords:
+  - ReAct
+  - language agents
+  - tool use
+  - agent reliability
+  - guarded routing
+  - failure recovery
+  - verification
+  - trajectory analysis
