@@ -736,7 +736,7 @@ python -m pytest -v
 Clone the repository:
 
 ```bash
-git clone <your-repository-url>
+git clone https://github.com/Lavanya-Jothivel/trajectory-lab.git
 cd trajectory-lab
 ```
 
