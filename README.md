@@ -661,6 +661,25 @@ The following table summarizes the main controlled experiments.
 They should not be interpreted as scores from one common benchmark or used as direct model-performance comparisons.
 
 ---
+## Key Result Visuals
+
+### Raw Qwen vs Guarded Router
+
+The guarded router improves reliability by enforcing deterministic tool use for supported tasks rather than allowing the model to bypass required tools.
+
+![Guarded Router Benchmark](results/guarded_router_benchmark.png)
+
+### Unified Reliability Evaluation
+
+The unified router combines guarded routing, explicit failure recovery, silent-error verification, correction, and abstention.
+
+![Unified Router Benchmark](results/unified_router_benchmark.png)
+
+### Reliability Mechanism Ablation
+
+The ablation summary compares the major agent variants and reliability mechanisms evaluated in TrajectoryLab.
+
+![Ablation Summary](results/ablation_summary.png)
 
 # Key Finding
 
