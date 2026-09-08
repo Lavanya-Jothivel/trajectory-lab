@@ -1,6 +1,8 @@
 import ast
 import operator
 import re
+from difflib import SequenceMatcher
+
 import requests
 
 
@@ -13,7 +15,7 @@ DUCKDUCKGO_API = "https://api.duckduckgo.com/"
 
 HEADERS = {
     "User-Agent": (
-        "TrajectoryLab/2.0 "
+        "TrajectoryLab/2.1 "
         "(educational reliability-agent project)"
     )
 }
@@ -84,8 +86,10 @@ def calculator(expression: str) -> str:
 EXACT_ANSWERS = {
     "capital of japan": "Tokyo",
     "what is the capital of japan": "Tokyo",
+
     "capital of france": "Paris",
     "what is the capital of france": "Paris",
+
     "creator of python": "Guido van Rossum",
     "who is the creator of python": "Guido van Rossum",
     "who created python": "Guido van Rossum",
@@ -141,25 +145,228 @@ def _clean_lookup_query(query: str) -> str:
             flags=re.IGNORECASE,
         )
 
-    return cleaned.strip(" ?.")
+    cleaned = cleaned.strip(
+        " ?."
+    )
+
+    return cleaned
 
 
 # =========================================================
-# WIKIPEDIA
+# SPECIAL QUERY NORMALIZATION
+# =========================================================
+
+def _expand_search_query(query: str) -> str:
+    """
+    Improve ambiguous searches before sending them
+    to Wikipedia.
+    """
+
+    cleaned = _clean_lookup_query(
+        query
+    )
+
+    normalized = cleaned.lower()
+
+    programming_languages = {
+        "java": "Java programming language",
+        "python": "Python programming language",
+        "c": "C programming language",
+        "c++": "C++ programming language",
+        "javascript": "JavaScript programming language",
+        "typescript": "TypeScript programming language",
+        "rust": "Rust programming language",
+        "go": "Go programming language",
+        "golang": "Go programming language",
+        "kotlin": "Kotlin programming language",
+        "swift": "Swift programming language",
+    }
+
+    if normalized in programming_languages:
+        return programming_languages[
+            normalized
+        ]
+
+    if "programming language" in normalized:
+        return cleaned
+
+    return cleaned
+
+
+# =========================================================
+# WIKIPEDIA TITLE RANKING
+# =========================================================
+
+def _normalize_title(text: str) -> str:
+    """
+    Normalize titles for similarity comparison.
+    """
+
+    text = text.lower()
+
+    text = re.sub(
+        r"[\(\)\[\]\{\},:_\-]",
+        " ",
+        text,
+    )
+
+    text = re.sub(
+        r"\s+",
+        " ",
+        text,
+    )
+
+    return text.strip()
+
+
+def _title_score(
+    search_query: str,
+    title: str,
+) -> float:
+    """
+    Score a Wikipedia result title based on how closely
+    it matches the intended query.
+    """
+
+    query_normalized = _normalize_title(
+        search_query
+    )
+
+    title_normalized = _normalize_title(
+        title
+    )
+
+    score = 0.0
+
+    # Exact normalized match
+    if title_normalized == query_normalized:
+        score += 100
+
+    # Strong prefix match
+    if title_normalized.startswith(
+        query_normalized
+    ):
+        score += 40
+
+    if query_normalized.startswith(
+        title_normalized
+    ):
+        score += 25
+
+    # Token overlap
+    query_words = set(
+        query_normalized.split()
+    )
+
+    title_words = set(
+        title_normalized.split()
+    )
+
+    if query_words:
+        overlap = len(
+            query_words & title_words
+        ) / len(query_words)
+
+        score += overlap * 40
+
+    # String similarity
+    similarity = SequenceMatcher(
+        None,
+        query_normalized,
+        title_normalized,
+    ).ratio()
+
+    score += similarity * 20
+
+    # Prefer programming-language pages
+    if (
+        "programming language" in query_normalized
+        and "programming language" in title_normalized
+    ):
+        score += 35
+
+    # Penalize comparison/list pages
+    unwanted_terms = [
+        "comparison",
+        "list of",
+        "history of",
+        "syntax",
+        "criticisms",
+        "versions",
+    ]
+
+    for term in unwanted_terms:
+        if term in title_normalized:
+            score -= 50
+
+    return score
+
+
+def _select_best_title(
+    search_query: str,
+    results: list,
+):
+    """
+    Select the most relevant Wikipedia title.
+    """
+
+    if not results:
+        return None
+
+    scored_results = []
+
+    for item in results:
+        title = item.get(
+            "title"
+        )
+
+        if not title:
+            continue
+
+        score = _title_score(
+            search_query,
+            title,
+        )
+
+        scored_results.append(
+            (
+                score,
+                title,
+            )
+        )
+
+    if not scored_results:
+        return None
+
+    scored_results.sort(
+        key=lambda item: item[0],
+        reverse=True,
+    )
+
+    return scored_results[0][1]
+
+
+# =========================================================
+# WIKIPEDIA SEARCH
 # =========================================================
 
 def _search_wikipedia(query: str):
     """
-    Search Wikipedia and return the best page title.
+    Search Wikipedia and select the most relevant
+    page title instead of blindly taking result #1.
     """
+
+    search_query = _expand_search_query(
+        query
+    )
 
     params = {
         "action": "query",
         "list": "search",
-        "srsearch": query,
+        "srsearch": search_query,
         "format": "json",
         "utf8": 1,
-        "srlimit": 5,
+        "srlimit": 10,
     }
 
     response = requests.get(
@@ -179,13 +386,15 @@ def _search_wikipedia(query: str):
         .get("search", [])
     )
 
-    if not results:
-        return None
+    return _select_best_title(
+        search_query,
+        results,
+    )
 
-    return results[0]["title"]
 
-
-def _get_wikipedia_summary(title: str):
+def _get_wikipedia_summary(
+    title: str,
+):
     """
     Retrieve a short introduction from Wikipedia.
     """
@@ -220,7 +429,9 @@ def _get_wikipedia_summary(title: str):
 
     for page in pages.values():
 
-        extract = page.get("extract")
+        extract = page.get(
+            "extract"
+        )
 
         if not extract:
             continue
@@ -237,21 +448,16 @@ def _get_wikipedia_summary(title: str):
     return None
 
 
-def _wikipedia_lookup(query: str):
+def _wikipedia_lookup(
+    query: str,
+):
     """
     Try retrieving information from Wikipedia.
-
-    Returns None if Wikipedia cannot provide
-    a usable result.
     """
 
     try:
-        search_query = _clean_lookup_query(
-            query
-        )
-
         title = _search_wikipedia(
-            search_query
+            query
         )
 
         if title is None:
@@ -273,16 +479,16 @@ def _wikipedia_lookup(query: str):
 # DUCKDUCKGO FALLBACK
 # =========================================================
 
-def _duckduckgo_lookup(query: str):
+def _duckduckgo_lookup(
+    query: str,
+):
     """
-    Retrieve an Instant Answer from DuckDuckGo.
-
-    This acts as a secondary knowledge source when
-    Wikipedia is unavailable or rate-limited.
+    Secondary knowledge source used when Wikipedia
+    is unavailable or rate-limited.
     """
 
     try:
-        search_query = _clean_lookup_query(
+        search_query = _expand_search_query(
             query
         )
 
@@ -311,6 +517,7 @@ def _duckduckgo_lookup(query: str):
         ).strip()
 
         if abstract:
+
             sentences = re.split(
                 r"(?<=[.!?])\s+",
                 abstract,
@@ -373,13 +580,15 @@ def _duckduckgo_lookup(query: str):
 # HYBRID KNOWLEDGE LOOKUP
 # =========================================================
 
-def lookup(query: str) -> str:
+def lookup(
+    query: str,
+) -> str:
     """
     Reliable hybrid knowledge lookup.
 
-    Order:
+    Priority:
     1. Deterministic benchmark answers
-    2. Wikipedia
+    2. Wikipedia with title ranking
     3. DuckDuckGo fallback
     """
 
@@ -387,13 +596,11 @@ def lookup(query: str) -> str:
         query
     )
 
-    # Preserve deterministic benchmark behaviour.
     if normalized in EXACT_ANSWERS:
         return EXACT_ANSWERS[
             normalized
         ]
 
-    # Primary knowledge source.
     wikipedia_result = (
         _wikipedia_lookup(
             query
@@ -403,7 +610,6 @@ def lookup(query: str) -> str:
     if wikipedia_result:
         return wikipedia_result
 
-    # Independent fallback source.
     fallback_result = (
         _duckduckgo_lookup(
             query
