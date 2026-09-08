@@ -1,62 +1,120 @@
----
-title: Trajectory Lab
-emoji: 🤖
-colorFrom: blue
-colorTo: purple
-sdk: streamlit
-app_file: app.py
-pinned: false
----
-# TrajectoryLab
+# 🤖 Trajectory Lab
 
-**ReAct Replication and Reliability Analysis of Tool-Using Language Agents**
+### ReAct Replication and Reliability Analysis of Tool-Using Language Agents
 
-TrajectoryLab is a research-oriented implementation exploring how tool-using language agents behave when tool execution is unreliable.
+[![Python](https://img.shields.io/badge/Python-3.12-blue)](https://www.python.org/)
+[![Tests](https://img.shields.io/badge/tests-32%20passed-brightgreen)](#testing)
+[![Streamlit](https://img.shields.io/badge/Live%20Demo-Streamlit-red)](https://trajectory-lab-5agbx7aqfqtx92ljzeozla.streamlit.app/)
 
-The project begins with the **ReAct** paradigm — interleaving reasoning with actions and observations — and extends the basic agent with reliability mechanisms for:
+**Live Demo:**  
+https://trajectory-lab-5agbx7aqfqtx92ljzeozla.streamlit.app/
 
-- deterministic tool routing
+Trajectory Lab is a research-oriented implementation exploring how tool-using language agents behave when tool execution is unreliable.
+
+The project begins with the **ReAct** paradigm—interleaving reasoning, actions, and observations—and extends the basic agent with reliability mechanisms for:
+
+- automatic multi-tool routing
 - explicit tool-failure recovery
 - silent-error verification
 - automatic correction
+- guarded tool execution
 - unsupported-task abstention
+- dynamic knowledge retrieval
+- fallback retrieval
 - trajectory-level evaluation
+- controlled fault injection
 
 The central question is:
 
-> Is producing the correct answer enough, or should a tool-using agent also be evaluated on how reliably it obtained that answer?
+> **Is producing the correct answer enough, or should a tool-using agent also be evaluated on how reliably it obtained that answer?**
 
-TrajectoryLab evaluates both.
+Trajectory Lab explores both.
 
 ---
 
-## Research Foundation
+# 🚀 Live Interactive Demo
+
+The project includes a deployed Streamlit application with two modes.
+
+### 🚀 Auto Agent
+
+Users can enter mathematical or factual questions.
+
+Examples:
+
+```text
+What is 347 * 29?
+What is artificial intelligence?
+What is Java programming language?
+Who is Alan Turing?
+Apollo 11
+```
+
+The agent automatically determines whether to use:
+
+```text
+calculator
+or
+knowledge lookup
+```
+
+The interface displays:
+
+```text
+Final Answer
+Selected Tool
+Recovered
+Verified
+Corrected
+Execution Trajectory
+```
+
+### 🧪 Reliability Lab
+
+The Reliability Lab provides controlled fault-injection experiments demonstrating:
+
+- explicit calculator failure
+- silent calculator error
+- explicit lookup failure
+- silent lookup error
+
+This makes the recovery and correction mechanisms directly observable.
+
+**Live application:**
+
+https://trajectory-lab-5agbx7aqfqtx92ljzeozla.streamlit.app/
+
+---
+
+# Research Foundation
 
 This project is inspired by:
 
-**ReAct: Synergizing Reasoning and Acting in Language Models**  
-Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan, and Yuan Cao.  
+**ReAct: Synergizing Reasoning and Acting in Language Models**
+
+Shunyu Yao, Jeffrey Zhao, Dian Yu, Nan Du, Izhak Shafran, Karthik Narasimhan, and Yuan Cao.
+
 ICLR 2023.
 
 ReAct combines reasoning traces with actions so that language models can interact with external environments and tools while solving tasks.
 
-TrajectoryLab reproduces the core interaction pattern:
+Trajectory Lab reproduces the core interaction pattern:
 
 ```text
 Thought
-  ↓
+   ↓
 Action
-  ↓
+   ↓
 Action Input
-  ↓
+   ↓
 Observation
-  ↓
+   ↓
 Thought
-  ↓
+   ↓
 Final Answer
 ```
 
-The project then studies what happens when this execution process becomes unreliable.
+The project then extends this execution pattern to study what happens when tools fail, return incorrect results, or are bypassed by the model.
 
 ---
 
@@ -75,107 +133,212 @@ A tool-using model may:
 - repeatedly call tools unnecessarily
 - route unsupported requests to inappropriate tools
 
-These problems motivated the reliability extensions implemented in TrajectoryLab.
+A particularly important distinction is between:
+
+```text
+Answer Correctness
+```
+
+and:
+
+```text
+Execution Reliability
+```
+
+For example, a model may know that:
+
+```text
+6 * 7 = 42
+```
+
+without actually calling the calculator it was instructed to use.
+
+The final answer is correct, but the execution policy was violated.
+
+Trajectory Lab therefore evaluates not only the final answer but also the trajectory used to obtain it.
 
 ---
 
 # System Architecture
 
-The final architecture combines guarded routing with failure recovery and verification.
+The current system combines automatic routing, guarded execution, recovery, verification, correction, and trajectory logging.
 
 ```text
-                     User Question
-                          |
-                          v
-                  +----------------+
-                  | Routing Guard  |
-                  +----------------+
-                          |
-              +-----------+-----------+
-              |                       |
-              v                       v
-         Calculator                 Lookup
-              |
-              v
-       Primary Execution
-              |
-       +------+------+
-       |             |
-       v             v
- Explicit Error?   Silent Fault?
-       |             |
-      Yes           Yes
-       |             |
-       v             v
-   Recovery      Verification
-       |             |
-       v             v
-Fallback Tool     Correction
-       |             |
-       +------+------+
-              |
-              v
-         Final Answer
-              |
-              v
-       Trajectory Logging
+                    User Query
+                        │
+                        ▼
+                ┌───────────────┐
+                │  Tool Router  │
+                └───────────────┘
+                        │
+              ┌─────────┴─────────┐
+              │                   │
+              ▼                   ▼
+         Calculator        Knowledge Lookup
+              │                   │
+              └─────────┬─────────┘
+                        │
+                        ▼
+                Primary Execution
+                        │
+               ┌────────┴────────┐
+               │                 │
+               ▼                 ▼
+        Explicit Failure?   Successful Output
+               │                 │
+              Yes                ▼
+               │            Verification
+               ▼                 │
+            Recovery        ┌────┴────┐
+               │            │         │
+               ▼          Match    Mismatch
+         Trusted Tool        │         │
+               │             ▼         ▼
+               │          Accept    Correct
+               └─────────────┬─────────┘
+                             │
+                             ▼
+                        Final Answer
+                             │
+                             ▼
+                     Trajectory Logging
 ```
 
-For unsupported requests, the router can abstain rather than forcing an unrelated tool call.
+The system also contains guarded-router experiments where unsupported tasks can be left unrouted rather than forcing an inappropriate tool call.
 
 ---
 
-# Project Structure
+# Current Multi-Tool Agent
+
+The current interactive agent supports two primary tool families.
+
+## 1. Calculator
+
+Arithmetic expressions are evaluated using a restricted Python AST evaluator rather than unrestricted `eval()`.
+
+Example:
 
 ```text
-trajectory-lab/
-│
-├── src/
-│   ├── agent.py
-│   ├── baseline.py
-│   ├── environment.py
-│   ├── guarded_agent.py
-│   ├── guarded_router.py
-│   ├── model_interface.py
-│   ├── parser.py
-│   ├── prompts.py
-│   ├── react_recovery_agent.py
-│   ├── recovery_agent.py
-│   ├── reliability_agent.py
-│   ├── reliable_guarded_agent.py
-│   ├── reliable_guarded_router.py
-│   ├── tools.py
-│   └── verification_agent.py
-│
-├── experiments/
-│   ├── baseline evaluation
-│   ├── ReAct evaluation
-│   ├── recovery experiments
-│   ├── verification experiments
-│   ├── trajectory analysis
-│   ├── real-model evaluation
-│   ├── guarded-router evaluation
-│   └── unified reliability evaluation
-│
-├── tests/
-│   ├── unit tests
-│   └── integration tests
-│
-├── results/
-│   ├── CSV experiment results
-│   ├── JSON trajectory traces
-│   └── PNG plots
-│
-├── requirements.txt
-├── .gitignore
-└── README.md
+Input:
+What is (15 + 5) * 3?
+
+Extracted Expression:
+(15 + 5) * 3
+
+Output:
+60
 ```
+
+Supported operations include basic arithmetic such as:
+
+```text
++
+-
+*
+/
+%
+**
+()
+```
+
+The router can recognize natural-language mathematical prompts and extract the expression before execution.
+
+---
+
+## 2. Dynamic Knowledge Lookup
+
+The original controlled implementation used a small local factual knowledge base.
+
+The current version extends this into **dynamic external retrieval**.
+
+The retrieval pipeline uses:
+
+```text
+Knowledge Query
+      │
+      ▼
+Wikipedia
+      │
+      ├──── Success ────► Return Result
+      │
+      └──── Failure / Rate Limit
+                    │
+                    ▼
+             Fallback Source
+                    │
+                    ▼
+               Return Result
+```
+
+Wikipedia search results are ranked instead of blindly accepting the first result.
+
+This improves ambiguous queries such as:
+
+```text
+What is Java programming language?
+What is Python programming language?
+What is C programming language?
+What is Rust programming language?
+```
+
+and helps avoid unrelated results such as comparison or list pages.
+
+Example dynamic queries:
+
+```text
+What is artificial intelligence?
+What is reinforcement learning?
+Who is Alan Turing?
+Apollo 11
+What is Kubernetes?
+What is PostgreSQL?
+```
+
+A small deterministic answer set is retained for controlled benchmark cases so earlier experiments remain reproducible.
+
+---
+
+# Automatic Tool Routing
+
+The current multi-tool agent automatically chooses between mathematical execution and factual retrieval.
+
+Example:
+
+```text
+"What is 25 * 18?"
+        │
+        ▼
+   Math Detection
+        │
+        ▼
+    Calculator
+        │
+        ▼
+       450
+```
+
+For a factual question:
+
+```text
+"What is deep learning?"
+        │
+        ▼
+   Tool Router
+        │
+        ▼
+      Lookup
+        │
+        ▼
+Dynamic Knowledge Retrieval
+```
+
+This allows the Streamlit application to expose a simple **Auto Agent** interface without requiring users to manually choose a tool.
 
 ---
 
 # Core ReAct Agent
 
-The base implementation follows a ReAct-style execution loop.
+The original implementation follows a ReAct-style execution loop.
 
 A typical trajectory is:
 
@@ -183,12 +346,15 @@ A typical trajectory is:
 Question: What is 6 * 7?
 
 Thought: I should calculate this.
+
 Action: calculator
+
 Action Input: 6 * 7
 
 Observation: 42
 
 Thought: I have the result.
+
 Final Answer: 42
 ```
 
@@ -204,201 +370,27 @@ The parser recognizes either an agent action or a final answer.
 
 ---
 
-# Tools
-
-TrajectoryLab currently contains a calculator and a controlled factual lookup tool.
-
-## Calculator
-
-Arithmetic expressions are evaluated using a restricted Python AST evaluator instead of unrestricted `eval`.
-
-Example:
-
-```text
-Input:
-(15 + 5) * 3
-
-Output:
-60
-```
-
-## Lookup
-
-A small local knowledge base supports controlled factual retrieval.
-
-Example queries include:
-
-```text
-capital of japan
-capital of france
-creator of python
-```
-
-Example:
-
-```text
-Input:
-capital of japan
-
-Output:
-Tokyo
-```
-
-The local knowledge base is intentionally small because the current project focuses on agent execution reliability rather than large-scale retrieval.
-
----
-
-# Failure Injection
-
-To evaluate reliability behavior, TrajectoryLab deliberately introduces two different failure modes.
-
-## 1. Explicit Tool Failure
-
-An unreliable calculator simulates an unavailable tool.
-
-Example response:
-
-```text
-ERROR: calculator temporarily unavailable
-```
-
-Because the failure is visible, the agent can detect it and execute a fallback strategy.
-
----
-
-## 2. Silent Tool Failure
-
-A faulty calculator returns a plausible but incorrect value.
-
-For example:
-
-```text
-8 * 8 -> 63
-```
-
-This failure is more difficult because the tool does not report an error.
-
-The result therefore requires independent verification.
-
----
-
-# Recovery Agent
-
-The recovery mechanism handles explicit tool failures.
-
-Example:
-
-```text
-Question
-   |
-   v
-Unreliable Calculator
-   |
-   v
-ERROR
-   |
-   v
-Failure Detected
-   |
-   v
-Trusted Calculator
-   |
-   v
-Correct Result
-```
-
-For the controlled expression:
-
-```text
-(15 + 5) * 3
-```
-
-the unreliable calculator produces an explicit failure.
-
-The fallback calculator evaluates the original expression and returns:
-
-```text
-60
-```
-
-The recovery event is stored in the execution trajectory.
-
----
-
-# Verification Agent
-
-Explicit failures are relatively easy to detect.
-
-Silent errors are more dangerous because the output may appear valid.
-
-For:
-
-```text
-8 * 8
-```
-
-the deliberately faulty calculator returns:
-
-```text
-63
-```
-
-The verification layer independently executes the trusted calculator:
-
-```text
-64
-```
-
-Because the results disagree, the agent records a correction event and returns the trusted result.
-
-The trajectory becomes:
-
-```text
-Guard
-  |
-  v
-Faulty Calculator
-  |
-  v
-63
-  |
-  v
-Verification
-  |
-  v
-Trusted Calculator
-  |
-  v
-64
-  |
-  v
-Correction
-  |
-  v
-64
-```
-
----
-
 # Real Language Model Integration
 
-TrajectoryLab also integrates a real instruction-tuned language model:
+Trajectory Lab also integrates a real instruction-tuned language model:
 
 ```text
 Qwen/Qwen2.5-0.5B-Instruct
 ```
 
-The implementation uses Hugging Face Transformers.
+through Hugging Face Transformers.
 
 The model interface applies the tokenizer's chat template before generation so that the instruction-tuned model receives prompts in its expected conversational structure.
 
 The experiments were designed to remain CPU-friendly.
 
+The real-model experiments are separate from the deterministic reliability mechanisms used by the deployed Streamlit demo.
+
 ---
 
 # Real-Model ReAct Observation
 
-A small seven-task real-model evaluation produced an interesting result:
+A small seven-task real-model evaluation produced:
 
 | Metric | Result |
 |---|---:|
@@ -408,7 +400,7 @@ A small seven-task real-model evaluation produced an interesting result:
 | Average Tool Calls | 0.57 |
 | Error Rate | 0.00% |
 
-The important observation is the gap between:
+The important observation was the gap between:
 
 ```text
 Answer Accuracy = 100%
@@ -420,27 +412,27 @@ and:
 Correct Tool Selection = 57.14%
 ```
 
-The model could often answer simple questions correctly from its internal knowledge or arithmetic ability while ignoring the intended tool-use policy.
+The model could often answer simple questions correctly from internal knowledge or arithmetic ability while ignoring the intended tool-use policy.
 
 Therefore:
 
-> Correct answers do not necessarily imply correct agent execution.
+> **Correct answers do not necessarily imply correct agent execution.**
 
-This became one of the motivations for introducing guarded tool routing.
+This observation motivated the guarded-routing experiments.
 
 ---
 
 # Guarded Routing
 
-TrajectoryLab introduces a deterministic routing layer for supported tasks.
+Trajectory Lab introduces a deterministic routing layer for supported tasks.
 
-Arithmetic questions are routed to:
+Arithmetic questions can be routed to:
 
 ```text
 calculator
 ```
 
-Supported factual questions are routed to:
+while supported factual questions can be routed to:
 
 ```text
 lookup
@@ -455,8 +447,6 @@ Instead, it enforces an execution policy when a deterministic tool is expected t
 # Raw Model vs Guarded Router
 
 A controlled eight-task evaluation compared raw Qwen responses against guarded routing.
-
-Results:
 
 | Metric | Result |
 |---|---:|
@@ -493,36 +483,193 @@ The improvement should therefore be interpreted as **tool-policy enforcement**, 
 
 ---
 
+# Failure Injection
+
+Trajectory Lab deliberately introduces controlled failures so reliability mechanisms can be tested reproducibly.
+
+There are two major failure classes.
+
+## 1. Explicit Tool Failure
+
+An unreliable tool reports that execution failed.
+
+Example:
+
+```text
+ERROR: calculator temporarily unavailable
+```
+
+Because the failure is visible, the reliability layer can detect it and execute a fallback strategy.
+
+---
+
+## 2. Silent Tool Failure
+
+A faulty tool returns a plausible but incorrect result without reporting an error.
+
+Example:
+
+```text
+8 * 8 → 63
+```
+
+This is more dangerous because simply checking for an error message is insufficient.
+
+The result must instead be compared with a trusted reference execution.
+
+---
+
+# Recovery Agent
+
+The recovery mechanism handles explicit tool failures.
+
+Example:
+
+```text
+Question
+   │
+   ▼
+Unreliable Calculator
+   │
+   ▼
+ERROR
+   │
+   ▼
+Failure Detected
+   │
+   ▼
+Trusted Calculator
+   │
+   ▼
+Correct Result
+```
+
+For:
+
+```text
+(15 + 5) * 3
+```
+
+the controlled unreliable calculator produces:
+
+```text
+ERROR: calculator temporarily unavailable
+```
+
+The trusted calculator then evaluates the original expression:
+
+```text
+60
+```
+
+The recovery event is recorded in the trajectory.
+
+---
+
+# Verification and Silent-Error Correction
+
+Explicit failures are relatively easy to detect.
+
+Silent failures are more difficult because the result appears valid.
+
+For:
+
+```text
+8 * 8
+```
+
+the deliberately faulty calculator returns:
+
+```text
+63
+```
+
+The reliability layer rechecks the expression using the trusted calculator:
+
+```text
+64
+```
+
+Because the two results disagree, the system records a correction and returns:
+
+```text
+64
+```
+
+Trajectory:
+
+```text
+Faulty Calculator
+       │
+       ▼
+      63
+       │
+       ▼
+ Trusted Recheck
+       │
+       ▼
+      64
+       │
+       ▼
+Mismatch Detected
+       │
+       ▼
+Corrected Answer
+       │
+       ▼
+      64
+```
+
+For the current implementation, this is best understood as **trusted-tool rechecking** rather than universal independent factual verification.
+
+---
+
+# Reliability Lab
+
+The deployed Streamlit application exposes four reproducible reliability scenarios.
+
+| Scenario | Injected Problem | Expected Behavior |
+|---|---|---|
+| Explicit Calculator Failure | Calculator reports failure | Recover using trusted calculator |
+| Silent Calculator Error | `8 * 8 → 63` | Detect mismatch and return `64` |
+| Explicit Lookup Failure | Japan lookup reports failure | Recover using trusted lookup |
+| Silent Lookup Error | France capital returns `Lyon` | Detect mismatch and return `Paris` |
+
+These are intentionally injected failures used to evaluate the reliability pipeline.
+
+They should not be interpreted as naturally occurring production failures.
+
+---
+
 # Reliable Guarded Agent
 
-Guarded routing was then combined with recovery and verification.
-
-The reliability pipeline became:
+Guarded routing was combined with recovery and verification.
 
 ```text
 Route
-  |
-  v
+  │
+  ▼
 Execute Tool
-  |
-  v
+  │
+  ▼
 Detect Failure
-  |
-  +----------------------+
-  |                      |
-  v                      v
-Explicit Failure      Silent Fault
-  |                      |
-  v                      v
-Recovery             Verification
-  |                      |
-  v                      v
-Fallback              Correction
-  |                      |
-  +----------+-----------+
-             |
-             v
-        Final Answer
+  │
+  ├───────────────┐
+  │               │
+  ▼               ▼
+Explicit       Silent
+Failure        Fault
+  │               │
+  ▼               ▼
+Recovery      Verification
+  │               │
+  ▼               ▼
+Fallback      Correction
+  │               │
+  └───────┬───────┘
+          │
+          ▼
+     Final Answer
 ```
 
 ---
@@ -549,15 +696,13 @@ Results:
 
 The unsupported question was intentionally left unrouted.
 
-This is useful because it demonstrates that the guard does not simply trigger for every request.
+This demonstrates that the guard does not simply trigger for every request.
 
 ---
 
 # Unified Reliable Router
 
-The final system combines both calculator and factual routing with the reliability mechanisms.
-
-It supports:
+The unified reliability system combines:
 
 - arithmetic routing
 - factual lookup routing
@@ -568,29 +713,31 @@ It supports:
 - abstention
 - trajectory logging
 
-The execution policy can be summarized as:
+Execution policy:
 
 ```text
 Route
-  ->
+  ↓
 Execute
-  ->
+  ↓
 Detect
-  ->
+  ↓
 Recover / Verify
-  ->
+  ↓
 Correct
-  ->
+  ↓
 Return
-  ->
+  ↓
 Log
 ```
+
+The newer multi-tool agent extends this concept with dynamic factual retrieval and a Streamlit interface.
 
 ---
 
 # Unified Reliable Router Benchmark
 
-The final controlled benchmark contains seven scenarios covering:
+The controlled benchmark contains seven scenarios covering:
 
 - normal arithmetic
 - explicit calculator failure
@@ -613,25 +760,27 @@ Results:
 
 The abstention rate corresponds to the deliberately unsupported task.
 
-Instead of forcing an arbitrary tool call, the router returns no supported route.
+Instead of forcing an arbitrary tool call, the guarded router returns no supported route.
 
 ---
 
 # Trajectory-Level Evaluation
 
-TrajectoryLab records execution trajectories rather than evaluating only final answers.
+Trajectory Lab records execution trajectories rather than evaluating only final answers.
 
 A trajectory can contain events such as:
 
 ```text
+tool_selection
 guard
+primary
 action
 recovery
 verification
 correction
 ```
 
-For the five-run reliability evaluation:
+For an earlier five-run reliability evaluation:
 
 | Metric | Result |
 |---|---:|
@@ -652,7 +801,7 @@ This makes the internal execution behavior observable.
 
 # Experimental Summary
 
-The following table summarizes the main controlled experiments.
+The main controlled experiments produced:
 
 | Experiment | Accuracy / Metric |
 |---|---:|
@@ -667,32 +816,35 @@ The following table summarizes the main controlled experiments.
 
 **Important:** these results come from different small controlled task sets.
 
-They should not be interpreted as scores from one common benchmark or used as direct model-performance comparisons.
+They should not be interpreted as scores from one common benchmark or as general real-world agent reliability claims.
 
 ---
-## Key Result Visuals
 
-### Raw Qwen vs Guarded Router
+# Key Result Visuals
 
-The guarded router improves reliability by enforcing deterministic tool use for supported tasks rather than allowing the model to bypass required tools.
+## Raw Qwen vs Guarded Router
+
+The guarded router improves controlled execution reliability by enforcing deterministic tool use for supported tasks rather than allowing the model to bypass required tools.
 
 ![Guarded Router Benchmark](results/guarded_router_benchmark.png)
 
-### Unified Reliability Evaluation
+## Unified Reliability Evaluation
 
 The unified router combines guarded routing, explicit failure recovery, silent-error verification, correction, and abstention.
 
 ![Unified Router Benchmark](results/unified_router_benchmark.png)
 
-### Reliability Mechanism Ablation
+## Reliability Mechanism Ablation
 
-The ablation summary compares the major agent variants and reliability mechanisms evaluated in TrajectoryLab.
+The ablation summary compares the major agent variants and reliability mechanisms evaluated in Trajectory Lab.
 
 ![Ablation Summary](results/ablation_summary.png)
 
+---
+
 # Key Finding
 
-The central observation of TrajectoryLab is the distinction between:
+The central observation of Trajectory Lab is the distinction between:
 
 ```text
 Answer Correctness
@@ -724,7 +876,96 @@ and:
 How did the agent obtain that answer?
 ```
 
-TrajectoryLab explores this second dimension through trajectory logging, tool-policy enforcement, recovery, verification, correction, and abstention.
+Trajectory Lab explores this second dimension through trajectory logging, tool-policy enforcement, recovery, trusted-tool rechecking, correction, and abstention.
+
+---
+
+# Project Structure
+
+```text
+trajectory-lab/
+│
+├── app.py
+├── pytest.ini
+├── requirements.txt
+├── README.md
+│
+├── src/
+│   ├── agent.py
+│   ├── baseline.py
+│   ├── environment.py
+│   ├── guarded_agent.py
+│   ├── guarded_router.py
+│   ├── model_interface.py
+│   ├── multi_tool_agent.py
+│   ├── parser.py
+│   ├── prompts.py
+│   ├── react_recovery_agent.py
+│   ├── recovery_agent.py
+│   ├── reliability_agent.py
+│   ├── reliable_guarded_agent.py
+│   ├── reliable_guarded_router.py
+│   ├── tools.py
+│   └── verification_agent.py
+│
+├── experiments/
+│   ├── baseline evaluation
+│   ├── ReAct evaluation
+│   ├── recovery experiments
+│   ├── verification experiments
+│   ├── trajectory analysis
+│   ├── real-model evaluation
+│   ├── guarded-router evaluation
+│   └── unified reliability evaluation
+│
+├── tests/
+│   ├── unit tests
+│   └── integration tests
+│
+└── results/
+    ├── CSV experiment results
+    ├── JSON trajectory traces
+    └── PNG plots
+```
+
+---
+
+# Tech Stack
+
+### Core
+
+- Python 3.12
+- PyTorch
+- Hugging Face Transformers
+- Qwen2.5-0.5B-Instruct
+
+### Agent Reliability
+
+- ReAct-style execution
+- deterministic guarded routing
+- automatic multi-tool routing
+- AST-based calculator
+- recovery mechanisms
+- trusted-tool rechecking
+- controlled fault injection
+
+### Retrieval
+
+- Wikipedia API
+- fallback knowledge retrieval
+- HTTP requests
+
+### Interface
+
+- Streamlit
+
+### Evaluation
+
+- Pytest
+- Pandas
+- NumPy
+- scikit-learn
+- Matplotlib
 
 ---
 
@@ -751,7 +992,13 @@ Current status:
 32 passed
 ```
 
-Run the complete test suite with:
+Run:
+
+```bash
+pytest -q
+```
+
+or:
 
 ```bash
 python -m pytest -v
@@ -780,10 +1027,38 @@ Activate it on Windows PowerShell:
 .venv\Scripts\Activate.ps1
 ```
 
+Linux/macOS:
+
+```bash
+source .venv/bin/activate
+```
+
 Install dependencies:
 
 ```bash
 pip install -r requirements.txt
+```
+
+---
+
+# Running the Streamlit App
+
+Start the interactive application with:
+
+```bash
+streamlit run app.py
+```
+
+Then use either:
+
+```text
+🚀 Auto Agent
+```
+
+or:
+
+```text
+🧪 Reliability Lab
 ```
 
 ---
@@ -867,29 +1142,29 @@ results/final_results_summary.csv
 results/final_results_summary.json
 ```
 
-Additional baseline, recovery, verification, and trajectory experiment outputs are also retained in the `results/` directory.
+Additional baseline, recovery, verification, and trajectory experiment outputs are retained in the `results/` directory.
 
 ---
 
-# Limitations
+# Current Scope and Limitations
 
-The current project is a controlled research replication and extension rather than a large-scale agent benchmark.
+Trajectory Lab is a controlled research replication and reliability project rather than a general-purpose AI assistant.
 
 Current limitations include:
 
-- small task sets
-- small local factual knowledge base
-- rule-based deterministic routing
-- synthetic tool failures
-- limited number of real-model tasks
-- one small instruction-tuned language model
-- arithmetic-focused verification
-- no external production tool APIs
-- no large standardized agent benchmark yet
+- relatively small controlled evaluation sets
+- rule-based routing for the deployed agent
+- synthetic fault-injection scenarios
+- one small instruction-tuned model in the real-model experiments
+- external retrieval services can vary in availability and result quality
+- trusted-tool rechecking is not equivalent to universal factual verification
+- no general code-generation tool
+- no large standardized agent benchmark
+- no production-scale external tool ecosystem
 
-The reported 100% results therefore validate the implemented mechanisms **within these controlled settings**.
+The reported 100% results therefore validate specific mechanisms **within their controlled evaluation settings**.
 
-They should not be interpreted as evidence that the system achieves 100% reliability on arbitrary real-world agent tasks.
+They should not be interpreted as evidence of 100% reliability on arbitrary real-world agent tasks.
 
 ---
 
@@ -897,34 +1172,40 @@ They should not be interpreted as evidence that the system achieves 100% reliabi
 
 Potential extensions include:
 
-- evaluation on larger tool-use benchmarks
-- multiple language-model backends
-- larger retrieval systems
-- dynamic tool registries
-- semantic tool routing
+- LLM-based semantic tool routing
+- independent multi-source factual verification
 - confidence-aware routing
+- retrieval confidence scoring
+- additional tool families
+- code-generation tools
+- web-search tools
+- dynamic tool registries
 - stochastic tool failures
 - adversarial tool outputs
 - multi-step recovery policies
+- retry policies with exponential backoff
+- tool-health monitoring
 - latency and cost measurements
 - trajectory anomaly detection
 - automated policy-compliance scoring
-- evaluation on real-world agent environments
+- larger standardized agent benchmarks
 
 ---
 
 # Reproducibility
 
-The project stores:
+The repository retains:
 
 - experiment scripts
-- unit and integration tests
+- unit tests
+- integration tests
 - CSV result tables
 - JSON trajectories
 - generated plots
 - consolidated result summaries
+- controlled fault-injection tools
 
-This allows individual reliability experiments to be rerun and inspected independently.
+This allows the reliability experiments to be rerun and inspected independently.
 
 ---
 
@@ -942,6 +1223,23 @@ Paper: https://arxiv.org/abs/2210.03629
 
 # Disclaimer
 
-TrajectoryLab is an educational and research replication project.
+Trajectory Lab is an educational research replication and extension project.
 
-The controlled evaluations are designed to study specific tool-use failure modes and reliability mechanisms. Results should be interpreted within the scope of those experiments.
+The controlled evaluations are designed to study specific tool-use failure modes, routing policies, recovery mechanisms, and execution trajectories.
+
+Results should be interpreted within the scope of those experiments and not as general claims about production-scale AI-agent reliability.
+
+---
+
+# Author
+
+**Lavanya Jothivel**
+
+B.Tech — Artificial Intelligence and Data Science  
+Madras Institute of Technology, Anna University
+
+GitHub: https://github.com/Lavanya-Jothivel
+
+---
+
+⭐ If you find the project useful, consider starring the repository.
