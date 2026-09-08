@@ -4,6 +4,27 @@ import re
 import requests
 
 
+# =========================================================
+# CONFIGURATION
+# =========================================================
+
+WIKIPEDIA_API = "https://en.wikipedia.org/w/api.php"
+DUCKDUCKGO_API = "https://api.duckduckgo.com/"
+
+HEADERS = {
+    "User-Agent": (
+        "TrajectoryLab/2.0 "
+        "(educational reliability-agent project)"
+    )
+}
+
+REQUEST_TIMEOUT = 10
+
+
+# =========================================================
+# SAFE CALCULATOR
+# =========================================================
+
 OPERATORS = {
     ast.Add: operator.add,
     ast.Sub: operator.sub,
@@ -14,10 +35,6 @@ OPERATORS = {
     ast.USub: operator.neg,
 }
 
-
-# =========================================================
-# CALCULATOR
-# =========================================================
 
 def _evaluate(node):
     if isinstance(node, ast.Constant) and isinstance(
@@ -61,7 +78,7 @@ def calculator(expression: str) -> str:
 
 
 # =========================================================
-# EXACT KNOWLEDGE ANSWERS
+# DETERMINISTIC BENCHMARK ANSWERS
 # =========================================================
 
 EXACT_ANSWERS = {
@@ -77,13 +94,11 @@ EXACT_ANSWERS = {
 
 
 def _normalize_query(query: str) -> str:
-    """
-    Normalize a question for exact-match lookup.
-    """
-
     normalized = query.strip().lower()
 
-    normalized = normalized.rstrip("?.!")
+    normalized = normalized.rstrip(
+        "?.!"
+    )
 
     normalized = re.sub(
         r"\s+",
@@ -95,13 +110,13 @@ def _normalize_query(query: str) -> str:
 
 
 # =========================================================
-# WIKIPEDIA LOOKUP
+# QUERY CLEANING
 # =========================================================
 
 def _clean_lookup_query(query: str) -> str:
     """
     Convert natural-language questions into
-    Wikipedia-friendly search terms.
+    search-friendly queries.
     """
 
     cleaned = query.strip()
@@ -129,12 +144,14 @@ def _clean_lookup_query(query: str) -> str:
     return cleaned.strip(" ?.")
 
 
+# =========================================================
+# WIKIPEDIA
+# =========================================================
+
 def _search_wikipedia(query: str):
     """
     Search Wikipedia and return the best page title.
     """
-
-    url = "https://en.wikipedia.org/w/api.php"
 
     params = {
         "action": "query",
@@ -145,27 +162,21 @@ def _search_wikipedia(query: str):
         "srlimit": 5,
     }
 
-    headers = {
-        "User-Agent": "TrajectoryLab/1.0"
-    }
-
     response = requests.get(
-        url,
+        WIKIPEDIA_API,
         params=params,
-        headers=headers,
-        timeout=10,
+        headers=HEADERS,
+        timeout=REQUEST_TIMEOUT,
     )
 
     response.raise_for_status()
 
     data = response.json()
 
-    results = data.get(
-        "query",
-        {},
-    ).get(
-        "search",
-        [],
+    results = (
+        data
+        .get("query", {})
+        .get("search", [])
     )
 
     if not results:
@@ -179,8 +190,6 @@ def _get_wikipedia_summary(title: str):
     Retrieve a short introduction from Wikipedia.
     """
 
-    url = "https://en.wikipedia.org/w/api.php"
-
     params = {
         "action": "query",
         "prop": "extracts",
@@ -192,27 +201,21 @@ def _get_wikipedia_summary(title: str):
         "utf8": 1,
     }
 
-    headers = {
-        "User-Agent": "TrajectoryLab/1.0"
-    }
-
     response = requests.get(
-        url,
+        WIKIPEDIA_API,
         params=params,
-        headers=headers,
-        timeout=10,
+        headers=HEADERS,
+        timeout=REQUEST_TIMEOUT,
     )
 
     response.raise_for_status()
 
     data = response.json()
 
-    pages = data.get(
-        "query",
-        {},
-    ).get(
-        "pages",
-        {},
+    pages = (
+        data
+        .get("query", {})
+        .get("pages", {})
     )
 
     for page in pages.values():
@@ -234,66 +237,197 @@ def _get_wikipedia_summary(title: str):
     return None
 
 
-def lookup(query: str) -> str:
+def _wikipedia_lookup(query: str):
     """
-    Hybrid knowledge lookup.
+    Try retrieving information from Wikipedia.
 
-    Known benchmark questions return concise
-    deterministic answers.
-
-    Other questions use Wikipedia dynamically.
+    Returns None if Wikipedia cannot provide
+    a usable result.
     """
-
-    normalized = _normalize_query(query)
-
-    if normalized in EXACT_ANSWERS:
-        return EXACT_ANSWERS[normalized]
 
     try:
-        search_query = _clean_lookup_query(query)
+        search_query = _clean_lookup_query(
+            query
+        )
 
         title = _search_wikipedia(
             search_query
         )
 
         if title is None:
-            return (
-                f"No Wikipedia result found for: {query}"
-            )
+            return None
 
-        summary = _get_wikipedia_summary(
+        return _get_wikipedia_summary(
             title
         )
 
-        if summary is None:
-            return (
-                f"No summary available for: {title}"
+    except (
+        requests.exceptions.RequestException,
+        ValueError,
+        KeyError,
+    ):
+        return None
+
+
+# =========================================================
+# DUCKDUCKGO FALLBACK
+# =========================================================
+
+def _duckduckgo_lookup(query: str):
+    """
+    Retrieve an Instant Answer from DuckDuckGo.
+
+    This acts as a secondary knowledge source when
+    Wikipedia is unavailable or rate-limited.
+    """
+
+    try:
+        search_query = _clean_lookup_query(
+            query
+        )
+
+        params = {
+            "q": search_query,
+            "format": "json",
+            "no_html": 1,
+            "skip_disambig": 1,
+            "no_redirect": 1,
+        }
+
+        response = requests.get(
+            DUCKDUCKGO_API,
+            params=params,
+            headers=HEADERS,
+            timeout=REQUEST_TIMEOUT,
+        )
+
+        response.raise_for_status()
+
+        data = response.json()
+
+        abstract = data.get(
+            "AbstractText",
+            "",
+        ).strip()
+
+        if abstract:
+            sentences = re.split(
+                r"(?<=[.!?])\s+",
+                abstract,
             )
 
-        return summary
+            return " ".join(
+                sentences[:2]
+            )
 
-    except requests.exceptions.Timeout:
-        return (
-            "ERROR: Wikipedia request timed out"
+        answer = str(
+            data.get(
+                "Answer",
+                "",
+            )
+        ).strip()
+
+        if answer:
+            return answer
+
+        definition = data.get(
+            "Definition",
+            "",
+        ).strip()
+
+        if definition:
+            return definition
+
+        related_topics = data.get(
+            "RelatedTopics",
+            [],
         )
 
-    except requests.exceptions.RequestException as error:
-        return (
-            "ERROR: Wikipedia request failed: "
-            f"{error}"
-        )
+        for topic in related_topics:
 
-    except Exception as error:
-        return f"Lookup error: {error}"
+            if not isinstance(
+                topic,
+                dict,
+            ):
+                continue
+
+            text = topic.get(
+                "Text",
+                "",
+            ).strip()
+
+            if text:
+                return text
+
+        return None
+
+    except (
+        requests.exceptions.RequestException,
+        ValueError,
+        KeyError,
+    ):
+        return None
+
+
+# =========================================================
+# HYBRID KNOWLEDGE LOOKUP
+# =========================================================
+
+def lookup(query: str) -> str:
+    """
+    Reliable hybrid knowledge lookup.
+
+    Order:
+    1. Deterministic benchmark answers
+    2. Wikipedia
+    3. DuckDuckGo fallback
+    """
+
+    normalized = _normalize_query(
+        query
+    )
+
+    # Preserve deterministic benchmark behaviour.
+    if normalized in EXACT_ANSWERS:
+        return EXACT_ANSWERS[
+            normalized
+        ]
+
+    # Primary knowledge source.
+    wikipedia_result = (
+        _wikipedia_lookup(
+            query
+        )
+    )
+
+    if wikipedia_result:
+        return wikipedia_result
+
+    # Independent fallback source.
+    fallback_result = (
+        _duckduckgo_lookup(
+            query
+        )
+    )
+
+    if fallback_result:
+        return fallback_result
+
+    return (
+        "ERROR: No knowledge source "
+        "could answer this query."
+    )
 
 
 # =========================================================
 # UNRELIABLE CALCULATOR
 # =========================================================
 
-def unreliable_calculator(expression: str) -> str:
+def unreliable_calculator(
+    expression: str,
+) -> str:
     """
-    Simulates an explicit calculator failure.
+    Controlled explicit calculator failure.
     """
 
     if "15" in expression:
@@ -301,16 +435,20 @@ def unreliable_calculator(expression: str) -> str:
             "ERROR: calculator temporarily unavailable"
         )
 
-    return calculator(expression)
+    return calculator(
+        expression
+    )
 
 
 # =========================================================
 # FAULTY CALCULATOR
 # =========================================================
 
-def faulty_calculator(expression: str) -> str:
+def faulty_calculator(
+    expression: str,
+) -> str:
     """
-    Simulates a silent calculator error.
+    Controlled silent calculator error.
     """
 
     normalized = expression.replace(
@@ -321,16 +459,20 @@ def faulty_calculator(expression: str) -> str:
     if "8*8" in normalized:
         return "63"
 
-    return calculator(expression)
+    return calculator(
+        expression
+    )
 
 
 # =========================================================
 # UNRELIABLE LOOKUP
 # =========================================================
 
-def unreliable_lookup(query: str) -> str:
+def unreliable_lookup(
+    query: str,
+) -> str:
     """
-    Simulates an explicit knowledge lookup failure.
+    Controlled explicit knowledge-tool failure.
     """
 
     if "japan" in query.lower():
@@ -338,19 +480,25 @@ def unreliable_lookup(query: str) -> str:
             "ERROR: lookup service temporarily unavailable"
         )
 
-    return lookup(query)
+    return lookup(
+        query
+    )
 
 
 # =========================================================
 # FAULTY LOOKUP
 # =========================================================
 
-def faulty_lookup(query: str) -> str:
+def faulty_lookup(
+    query: str,
+) -> str:
     """
-    Simulates a silent factual error.
+    Controlled silent factual error.
     """
 
-    normalized = _normalize_query(query)
+    normalized = _normalize_query(
+        query
+    )
 
     if (
         "capital of france" in normalized
@@ -358,7 +506,9 @@ def faulty_lookup(query: str) -> str:
     ):
         return "Lyon"
 
-    return lookup(query)
+    return lookup(
+        query
+    )
 
 
 # =========================================================
@@ -367,11 +517,19 @@ def faulty_lookup(query: str) -> str:
 
 TOOLS = {
     "calculator": calculator,
-    "unreliable_calculator": unreliable_calculator,
-    "faulty_calculator": faulty_calculator,
+    "unreliable_calculator": (
+        unreliable_calculator
+    ),
+    "faulty_calculator": (
+        faulty_calculator
+    ),
     "lookup": lookup,
-    "unreliable_lookup": unreliable_lookup,
-    "faulty_lookup": faulty_lookup,
+    "unreliable_lookup": (
+        unreliable_lookup
+    ),
+    "faulty_lookup": (
+        faulty_lookup
+    ),
 }
 
 
@@ -379,13 +537,17 @@ def run_tool(
     tool_name: str,
     tool_input: str,
 ) -> str:
-    """Run a registered tool by name."""
+    """Run a registered tool."""
 
-    tool = TOOLS.get(tool_name)
+    tool = TOOLS.get(
+        tool_name
+    )
 
     if tool is None:
         return (
             f"Unknown tool: {tool_name}"
         )
 
-    return tool(tool_input)
+    return tool(
+        tool_input
+    )
